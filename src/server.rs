@@ -1375,18 +1375,18 @@ impl proto::Peer for Peer {
         // A request translated from HTTP/1 must not include the :authority
         // header
         if let Some(authority) = pseudo.authority {
-            let maybe_authority = uri::Authority::from_shared(authority.clone().into_inner());
+            let maybe_authority = uri::Authority::from_maybe_shared(authority.clone().into_inner());
             parts.authority = Some(
                 match maybe_authority {
                     Ok(val) => val,
-                    Err(_) => uri::Authority::from_shared(Bytes::from("example.com")).unwrap(),
+                    Err(_) => uri::Authority::from_maybe_shared(Bytes::from("example.com")).unwrap(),
                 }
             );
         }
 
         // A :scheme is always required.
         if let Some(scheme) = pseudo.scheme {
-            let maybe_scheme = uri::Scheme::from_shared(scheme.clone().into_inner());
+            let maybe_scheme = scheme.parse();
             let scheme = maybe_scheme.or_else(|why| {
                 malformed!(
                     "malformed headers: malformed scheme ({:?}): {}",
@@ -1411,7 +1411,7 @@ impl proto::Peer for Peer {
                 malformed!("malformed headers: missing path");
             }
 
-            let maybe_path = uri::PathAndQuery::from_shared(path.clone().into_inner());
+            let maybe_path = uri::PathAndQuery::from_maybe_shared(path.clone().into_inner());
             parts.path_and_query = Some(maybe_path.or_else(|why| {
                 malformed!("malformed headers: malformed path ({:?}): {}", path, why,)
             })?);
